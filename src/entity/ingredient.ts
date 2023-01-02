@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
-import { RecipeIngridient } from './recipe_ingredient';
+import { RecipeIngredient } from './recipe_ingredient';
 
 @Entity()
 export class Ingredient{
@@ -19,6 +19,6 @@ export class Ingredient{
     @UpdateDateColumn()
     updatedAt: string;
 
-    @OneToMany(() => RecipeIngridient, (recipeIngridient) => recipeIngridient.ingridient)
-    ingridients: Ingredient[]
+    @OneToMany(() => RecipeIngredient, (recipeIngredient) => recipeIngredient.ingredient)
+    ingredients: Ingredient[]
 }

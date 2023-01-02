@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import 'dotenv/config';
 import { Ingredient } from './entity/ingredient';
 import { Recipe } from './entity/recipe';
-import { RecipeIngridient } from './entity/recipe_ingredient';
+import { RecipeIngredient } from './entity/recipe_ingredient';
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
@@ -13,7 +13,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     synchronize: true,
     logging: false,
-    entities: [Ingredient, Recipe, RecipeIngridient],
+    entities: [Ingredient, Recipe, RecipeIngredient],
     migrations: [],
     subscribers: [],
 });

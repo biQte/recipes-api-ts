@@ -2,9 +2,9 @@ import express from 'express';
 const router = express.Router();
 
 import recipesList from './recipes';
-import ingridientsList from './ingridients';
+import ingredientsList from './ingredients';
 
 router.use('/recipes', recipesList);
-router.use('/ingridients', ingridientsList);
+router.use('/ingredients', ingredientsList);
 
 export default router;

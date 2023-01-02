@@ -3,15 +3,15 @@ import { Recipe } from './recipe';
 import { Ingredient } from './ingredient';
 
 @Entity()
-export class RecipeIngridient{
+export class RecipeIngredient{
     @PrimaryGeneratedColumn()
     id: number;
 
     @ManyToOne(() => Recipe, (recipe) => recipe.recipes)
     recipe: Recipe;
 
-    @ManyToOne(() => Ingredient, (ingredient) => ingredient.ingridients)
-    ingridient: Ingredient;
+    @ManyToOne(() => Ingredient, (ingredient) => ingredient.ingredients)
+    ingredient: Ingredient;
 
     @Column({
         type: 'varchar',
