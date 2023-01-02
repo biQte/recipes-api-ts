@@ -1,10 +1,12 @@
-import express from 'express';
-const router = express.Router();
+import { Router } from 'express';
 
-router.get('/', (req, res) => {
+
+const RecipesRouter = Router();
+
+RecipesRouter.get('/', (req, res) => {
     res.json({recipes: {
         firstRecipe: 'first'
     }});
 });
 
-export default router;
+export default RecipesRouter;
