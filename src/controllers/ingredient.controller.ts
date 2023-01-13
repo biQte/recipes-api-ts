@@ -16,7 +16,7 @@ export class ingredientController{
                 res.send({ message: 'Such ingredient already exists!' });
             }
 
-            const ingredientResult = await ingredientRepository.save(ingredient);
+            await ingredientRepository.save(ingredient);
             res.status(201);
             res.send({});
         } catch (error){
@@ -36,4 +36,5 @@ export class ingredientController{
         const ingredients = await IngredientRepository.find();
         res.json(ingredients);
     }
+
 }
