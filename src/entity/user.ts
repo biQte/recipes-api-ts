@@ -49,10 +49,10 @@ export class User {
   })
   disabled: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamp with time zone" })
   createdAt: string;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: "timestamp with time zone" })
   updatedAt: string;
 
   @OneToMany(() => Password, (password) => password.user)

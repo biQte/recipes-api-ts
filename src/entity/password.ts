@@ -3,7 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
 } from "typeorm";
 import { User } from "./user";
@@ -31,6 +30,6 @@ export class Password {
   @ManyToOne(() => User, (user) => user.passwords)
   user: User;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamp with time zone" })
   createdAt: string;
 }

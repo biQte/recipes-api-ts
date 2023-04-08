@@ -6,7 +6,6 @@ import {
   ManyToOne,
 } from "typeorm";
 import { User } from "./user";
-import { StringLiteral } from "typescript";
 
 @Entity()
 export class Session {
@@ -29,7 +28,7 @@ export class Session {
   @Column({
     type: "varchar",
   })
-  signInUserAgent: string;
+  signInUserAgent: string | undefined;
 
   @Column({
     type: "varchar",
@@ -39,7 +38,7 @@ export class Session {
   @Column({
     type: "varchar",
   })
-  lastUserAgent: string;
+  lastUserAgent: string | undefined;
 
   @Column({
     type: "varchar",
@@ -63,6 +62,6 @@ export class Session {
   })
   sudoModeExpires: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: "timestamp with time zone" })
   firstAccessed: string;
 }
