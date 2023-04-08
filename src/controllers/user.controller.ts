@@ -4,7 +4,11 @@ import { Password } from "./../entity/password";
 import { Session } from "./../entity/session";
 import { AppDataSource } from "./../data-source";
 import { genPassword, validPassword } from "./../utils/password";
-import { userInfo } from "os";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+} from "./../utils/tokens";
 
 export class userController {
   static async create(req: Request, res: Response, next: NextFunction) {
@@ -31,12 +35,30 @@ export class userController {
         user.permissionLevel = ["user"];
         user.verified = false;
         user.disabled = false;
-        user.passwords = [password];
-
+        session.signInUserAgent = req.headers["user-agent"];
+        session.signInIpAddress = req.ip;
+        session.lastUserAgent = req.headers["user-agent"];
+        session.lastIpAddress = req.ip;
+        session.firstAccessed = new Date().toISOString();
+        session.lastAccessed = new Date();
         await passwordRepo.save(password);
+        user.passwords = [password];
+        session.accessToken = await generateAccessToken(user);
+        session.refreshToken = await generateRefreshToken(user);
+        await sessionRepo.save(session);
+        user.sessions = [session];
         await userRepo.save(user);
+        const userInfo = await userRepo
+          .createQueryBuilder("user")
+          .where("user.email = :email", { email: req.body.email })
+          .getOne();
         res.status(201);
-        res.json({ msg: "Account created successfuly", user: user });
+        res.json({
+          msg: "Account created successfuly",
+          user: userInfo,
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+        });
       }
     } catch (e) {
       console.log(e);
@@ -53,9 +75,24 @@ export class userController {
       }
       const hash = currentPassword.passwordHash;
       const salt = currentPassword.salt;
-      const validate = await validPassword(req.body.password, hash, salt);
-      if (validate) {
+      const validatePassword = await validPassword(
+        req.body.password,
+        hash,
+        salt
+      );
+      const validateRefreshToken = await verifyToken(req.body.refreshToken);
+      if (validatePassword && validateRefreshToken) {
         const { passwords, ...userInfo } = user;
+        const sessionRepo = AppDataSource.getRepository(Session);
+        const session = user.sessions[0];
+        if (session) {
+          session.accessToken = await generateAccessToken(user);
+          session.refreshToken = await generateRefreshToken(user);
+          session.lastAccessed = new Date();
+          session.lastIpAddress = req.ip;
+          session.lastUserAgent = req.headers["user-agent"];
+          await sessionRepo.save(session);
+        }
         res.status(200);
         res.json({ msg: "Login successful", user: userInfo });
       } else {
@@ -73,6 +110,10 @@ export class userController {
     const user = await userRepository.findOne({
       where: {
         email: email,
+      },
+      relations: {
+        passwords: true,
+        sessions: true,
       },
     });
     return user;
