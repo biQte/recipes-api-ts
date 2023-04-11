@@ -13,12 +13,13 @@ import {
 export class userController {
   static async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await userController.userExists(req.body.email);
+      const { user, userRepository } = await userController.userExists(
+        req.body.email
+      );
       if (!!user) {
         res.status(401);
         res.json({ msg: "User with provided email already exists!" });
       } else {
-        const userRepo = AppDataSource.getRepository(User);
         const passwordRepo = AppDataSource.getRepository(Password);
         const sessionRepo = AppDataSource.getRepository(Session);
         const user = new User();
@@ -39,7 +40,6 @@ export class userController {
         session.signInIpAddress = req.ip;
         session.lastUserAgent = req.headers["user-agent"];
         session.lastIpAddress = req.ip;
-        session.firstAccessed = new Date().toISOString();
         session.lastAccessed = new Date();
         await passwordRepo.save(password);
         user.passwords = [password];
@@ -47,8 +47,8 @@ export class userController {
         session.refreshToken = await generateRefreshToken(user);
         await sessionRepo.save(session);
         user.sessions = [session];
-        await userRepo.save(user);
-        const userInfo = await userRepo
+        await userRepository.save(user);
+        const userInfo = await userRepository
           .createQueryBuilder("user")
           .where("user.email = :email", { email: req.body.email })
           .getOne();
@@ -66,7 +66,9 @@ export class userController {
   }
 
   static async login(req: Request, res: Response, next: NextFunction) {
-    const user = await userController.userExists(req.body.email);
+    const { user, userRepository } = await userController.userExists(
+      req.body.email
+    );
     if (!!user) {
       const passwords = user.passwords;
       const currentPassword = passwords.find((i) => i.current === true);
@@ -82,19 +84,45 @@ export class userController {
       );
       const validateRefreshToken = await verifyToken(req.body.refreshToken);
       if (validatePassword && validateRefreshToken) {
-        const { passwords, ...userInfo } = user;
-        const sessionRepo = AppDataSource.getRepository(Session);
-        const session = user.sessions[0];
-        if (session) {
-          session.accessToken = await generateAccessToken(user);
-          session.refreshToken = await generateRefreshToken(user);
-          session.lastAccessed = new Date();
-          session.lastIpAddress = req.ip;
+        const sessionRepository = AppDataSource.getRepository(Session);
+        const matchingSession = user.sessions.find(
+          (session) => session.refreshToken === req.body.refreshToken
+        );
+        let refreshToken: string, accessToken: string;
+        if (!!matchingSession) {
+          console.log("refresh tokens are matching");
+          matchingSession.accessToken = await generateAccessToken(user);
+          accessToken = matchingSession.accessToken;
+          matchingSession.refreshToken = await generateRefreshToken(user);
+          refreshToken = matchingSession.refreshToken;
+          matchingSession.lastAccessed = new Date();
+          matchingSession.lastIpAddress = req.ip;
+          matchingSession.lastUserAgent = req.headers["user-agent"];
+          sessionRepository.save(matchingSession);
+        } else {
+          console.log("refresh tokens are not matching");
+          const session = new Session();
+          session.signInUserAgent = req.headers["user-agent"];
+          session.signInIpAddress = req.ip;
           session.lastUserAgent = req.headers["user-agent"];
-          await sessionRepo.save(session);
+          session.lastIpAddress = req.ip;
+          session.lastAccessed = new Date();
+          session.accessToken = await generateAccessToken(user);
+          accessToken = session.accessToken;
+          session.refreshToken = await generateRefreshToken(user);
+          refreshToken = session.refreshToken;
+          await sessionRepository.save(session);
+          user.sessions.push(session);
+          userRepository.save(user);
         }
+        const { sessions, passwords, ...userInfo } = user;
         res.status(200);
-        res.json({ msg: "Login successful", user: userInfo });
+        res.json({
+          msg: "Login successful",
+          user: userInfo,
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        });
       } else {
         res.status(401);
         res.json({ msg: "Invalid credentials" });
@@ -116,6 +144,9 @@ export class userController {
         sessions: true,
       },
     });
-    return user;
+    return {
+      user,
+      userRepository,
+    };
   }
 }
