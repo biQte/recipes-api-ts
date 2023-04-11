@@ -1,0 +1,105 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Recipes app API Documentation",
+    "version": "1.0.0"
+  },
+  "schemes": ["http"],
+  "servers": [{ "url": "http://localhost:4000/" }],
+  "paths": {
+    "/user/register": {
+      "post": {
+        "summary": "Create new user account",
+        "description": "Create new user account and get back his account data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserSchemaHeader"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserSchemaBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User with provided email already exists"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateUserSchemaHeader": {
+        "required": ["Text"],
+        "properties": {
+          "email": {
+            "type": "email",
+            "example": "yourmail@mail.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "John"
+          },
+          "surname": {
+            "type": "string",
+            "example": "Doe"
+          },
+          "password": {
+            "type": "string",
+            "example": "Kwakwa5!"
+          },
+          "gender": {
+            "type": "string",
+            "example": "male"
+          }
+        }
+      },
+      "CreateUserSchemaBody": {
+        "properties": {
+          "msg": {
+            "type": "string",
+            "example": "Account created successfuly"
+          },
+          "user": {
+            "type": "Object",
+            "example": {
+              "id": "uuid",
+              "email": "yourmail@mail.com",
+              "firstName": "John",
+              "surname": "Doe",
+              "gender": "male",
+              "permissionLevel": ["user"],
+              "verified": false,
+              "disabled": false,
+              "createdAt": "2023-04-11T01:15:19.609Z",
+              "updatedAt": "2023-04-11T01:15:19.609Z"
+            }
+          },
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMzIzNzNmOS0yZGJhLTQ4MTMtOWM1Yi0wN2FhNTMzYTdmNzciLCJpc3MiOiJodHRwczovL2dvbnRlcXJlY2lwZWFwcC5wbCIsImlhdCI6MTY4MTIwNzQ5MywiZXhwIjoxNjgxMjExMDkzfQ.IMQyChjWGTzQpl7vvpUC7saby4IpSamE1N6Ynat8Qy4Xpgpy8Y_xcvCvuYNQinOX30gd1j7wpVezcEqNex7G8Al8WhwEFV4msODt-d9XP_DpF3TxEhVvihnyc46B77YPaTzWhHMdwF-tuPepbxq_zocc2KG96WhTeFnRD88T7zK2SABfifsvFwWFq7tn36Fx-7MND1zeUm_gg_BYE_uudmbolPtpLbderq9Z9wuKvZwFMPfRgyRInjfEw2ers8lKwdRTtRcs7WsSfNQeB5v0dK4ZwH8g0utaGnKwJdTyTLAKXwOOYv_pgDwPjR-yYAW6YSqm72Ra7E3aU29x1nEQeAvTy4YbYj2n7Ep8Tg7yw4aU__jdX7QJJ0CZhrx2sG-0tGbGgqTVVDCTw4wQXCpF-UzObUUMSMuK1_JD0w9hT9OpMh05TQWfcMblftk8n-CjKdGm5FFT0d8xatdIO8ukLVTHWlezhKR3qe0A-oxF1jG3Em2HYd4J0Bo5Qksa2ZFyJDF1O5A6o4QE7CXF-wJ-kMp2gkLEiJ3QD_sc875QtU42R_cRQcaIWFUs6SRgcHyYHU4WoFLiAzcCRu3D2mRHX9yifhgfHg1Kfm7_2OfVAzyo2MV-p-_yMvxh0VtZR3YBh49s64CP8XaL-XqbZdI9cwQu0m-o-5CCk1A1kLxufJk"
+          },
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhMzIzNzNmOS0yZGJhLTQ4MTMtOWM1Yi0wN2FhNTMzYTdmNzciLCJpc3MiOiJodHRwczovL2dvbnRlcXJlY2lwZWFwcC5wbCIsImlhdCI6MTY4MTIwNzQ5MywiZXhwIjoxNjgxODEyMjkzfQ.eik6hKQ9KqYjXVaNAQfKLi2E7Kk6AztSH5NEXl6T7ATjsnIMzGqFXAJU0ZSik-airVPcx4AM1ah9DWRRSATsV30oi-zZrAoYWT2atqYSUZO62-0EgK_gwmpAp02iiPNqRK2fdXJFSN-8WpinLckiw4UtDRkAqecnAR7Cn37-1B6lbOwShXMcqFSbKbDbjuRuIBX6mVnhWw_lnWxq1IoiyKk526wDLUnKtR87ekUH2WvlJkLq1blSU1ALuwY5VmWlTQLCksINrLfdacvyDVh7oo5dmSxlZ40nstRxnPOQQocNnzlT4ecMHsnVfZRaQX4cvQo_hU35rnBR337SHfUcyYqQ_iObHYCiqUdu9Vm4iKaUDZ2ocUCC1oZcbf8yPHwJylgHEGkgHmw9hPB1w0YMXr_Bbp2Bk-qafpaW0aGnbxAU6VGZLeCKuBemwINsY-XLF9tNdSDOsQWUgeh_iFFmNWKYXvS6v88m9NRjdtcBMwS5fs4i7Hhv90k2FpdPZcaOqUCRC-PC_G_kB3JVjFDjNTIJ-LnlrwYKgV2QkPrjQFYYpk5DKsJQv-6KsaOnELd_r1lgWaS3VXtfpm_yFImOvj5QYQRxjnaIE2hCxR6gxoRFQJCHd5FN0hzJcVnmmSttxYQOV1Yu20ReY05K7-w2cdBQhyqJFGCYyjULXgpzuKk"
+          }
+        }
+      }
+    }
+  }
+}
