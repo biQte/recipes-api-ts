@@ -82,46 +82,26 @@ export class userController {
         hash,
         salt
       );
-      const validateRefreshToken = await verifyToken(req.body.refreshToken);
-      if (validatePassword && validateRefreshToken) {
+      if (validatePassword) {
         const sessionRepository = AppDataSource.getRepository(Session);
-        const matchingSession = user.sessions.find(
-          (session) => session.refreshToken === req.body.refreshToken
-        );
-        let refreshToken: string, accessToken: string;
-        if (!!matchingSession) {
-          console.log("refresh tokens are matching");
-          matchingSession.accessToken = await generateAccessToken(user);
-          accessToken = matchingSession.accessToken;
-          matchingSession.refreshToken = await generateRefreshToken(user);
-          refreshToken = matchingSession.refreshToken;
-          matchingSession.lastAccessed = new Date();
-          matchingSession.lastIpAddress = req.ip;
-          matchingSession.lastUserAgent = req.headers["user-agent"];
-          sessionRepository.save(matchingSession);
-        } else {
-          console.log("refresh tokens are not matching");
-          const session = new Session();
-          session.signInUserAgent = req.headers["user-agent"];
-          session.signInIpAddress = req.ip;
-          session.lastUserAgent = req.headers["user-agent"];
-          session.lastIpAddress = req.ip;
-          session.lastAccessed = new Date();
-          session.accessToken = await generateAccessToken(user);
-          accessToken = session.accessToken;
-          session.refreshToken = await generateRefreshToken(user);
-          refreshToken = session.refreshToken;
-          await sessionRepository.save(session);
-          user.sessions.push(session);
-          userRepository.save(user);
-        }
+        const session = new Session();
+        session.signInUserAgent = req.headers["user-agent"];
+        session.signInIpAddress = req.ip;
+        session.lastUserAgent = req.headers["user-agent"];
+        session.lastIpAddress = req.ip;
+        session.lastAccessed = new Date();
+        session.accessToken = await generateAccessToken(user);
+        session.refreshToken = await generateRefreshToken(user);
+        await sessionRepository.save(session);
+        user.sessions.push(session);
+        userRepository.save(user);
         const { sessions, passwords, ...userInfo } = user;
         res.status(200);
         res.json({
           msg: "Login successful",
           user: userInfo,
-          accessToken: accessToken,
-          refreshToken: refreshToken,
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
         });
       } else {
         res.status(401);
@@ -130,6 +110,39 @@ export class userController {
     } else {
       res.status(404);
       res.json({ msg: "User not found" });
+    }
+  }
+
+  static async refreshToken(req: Request, res: Response, next: NextFunction) {
+    const validateRefreshToken = await verifyToken(req.body.refreshToken);
+    if (!!validateRefreshToken) {
+      const sessionRepository = AppDataSource.getRepository(Session);
+      const session = await sessionRepository.findOne({
+        where: {
+          refreshToken: req.body.refreshToken,
+        },
+        relations: {
+          user: true,
+        },
+      });
+      if (!!session) {
+        session.accessToken = await generateAccessToken(session.user);
+        session.refreshToken = await generateRefreshToken(session.user);
+        session.lastAccessed = new Date();
+        session.lastIpAddress = req.ip;
+        session.lastUserAgent = req.headers["user-agent"];
+        sessionRepository.save(session);
+        res.status(200);
+        res.json({
+          msg: "Login succesfull",
+          user: session.user,
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+        });
+      } else {
+        res.status(401);
+        res.json({ msg: "No matching sessions were found" });
+      }
     }
   }
 
